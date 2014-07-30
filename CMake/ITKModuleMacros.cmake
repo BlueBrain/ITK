@@ -63,7 +63,6 @@ macro(itk_module _name)
   set(ITK_MODULE_${itk-module}_PRIVATE_DEPENDS "")
   set(ITK_MODULE_${itk-module-test}_DEPENDS "${itk-module}")
   set(ITK_MODULE_${itk-module}_DESCRIPTION "description")
-  set(ITK_MODULE_${itk-module}_EXCLUDE_FROM_DEFAULT 0)
   set(ITK_MODULE_${itk-module}_ENABLE_SHARED 0)
   foreach(arg ${ARGN})
     ### Parse itk_module named options
