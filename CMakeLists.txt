@@ -11,6 +11,7 @@ foreach(p
     cmake_policy(SET ${p} NEW)
   endif()
 endforeach()
+cmake_policy(SET CMP0048 OLD)
 
 project(ITK NONE)
 # Set a default build type if none was specified
