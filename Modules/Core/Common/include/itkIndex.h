@@ -222,7 +222,7 @@ public:
 
 // false positive warnings with GCC 4.9
 #if defined( __GNUC__ )
-#if ( __GNUC__ == 4 ) && ( __GNUC_MINOR__ == 9 )
+#if ( __GNUC__ == 4 ) && ( __GNUC_MINOR__ > 7 )
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
@@ -234,7 +234,7 @@ public:
     return m_Index[dim];
   }
 #if defined( __GNUC__ )
-#if ( __GNUC__ == 4 ) && ( __GNUC_MINOR__ == 9 )
+#if ( __GNUC__ == 4 ) && ( __GNUC_MINOR__ > 7 )
 #pragma GCC diagnostic pop
 #endif
 #endif
@@ -326,10 +326,10 @@ public:
 
 // force gccxml to find the constructors found before the internal upgrade to
 // gcc 4.2
-#if defined( CABLE_CONFIGURATION )
-  Index();                      //purposely not implemented
-  Index(const Self &);          //purposely not implemented
-  void operator=(const Self &); //purposely not implemented
+#if defined( ITK_WRAPPING_PARSER )
+  Index() ITK_DELETE_FUNCTION;
+  Index(const Self &) ITK_DELETE_FUNCTION;
+  void operator=(const Self &) ITK_DELETE_FUNCTION;
 
 #endif
 };

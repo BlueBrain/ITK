@@ -18,6 +18,8 @@
 #ifndef itkTransformFileWriter_h
 #define itkTransformFileWriter_h
 
+#include "ITKIOTransformBaseExport.h"
+
 #include "itkTransformIOBase.h"
 #include <iostream>
 #include <fstream>
@@ -34,7 +36,7 @@ namespace itk
    * \endwiki
    */
 template<typename TParametersValueType>
-class TransformFileWriterTemplate:public LightProcessObject
+class ITKIOTransformBase_TEMPLATE_EXPORT TransformFileWriterTemplate:public LightProcessObject
 {
 public:
 
@@ -96,19 +98,33 @@ protected:
 
 private:
   void PushBackTransformList(const Object *transObj);
-  void OpenStream(std::ofstream & out, bool binary);
 
   std::string                       m_FileName;
   ConstTransformListType            m_TransformList;
   bool                              m_AppendMode;
   typename TransformIOType::Pointer m_TransformIO;
 
-  TransformFileWriterTemplate(const Self &); //purposely not implemented
-  void operator=(const Self &);              //purposely not implemented
+  TransformFileWriterTemplate(const Self &) ITK_DELETE_FUNCTION;
+  void operator=(const Self &) ITK_DELETE_FUNCTION;
 };
 
 /** This helps to meet backward compatibility */
 typedef itk::TransformFileWriterTemplate<double> TransformFileWriter;
+
+#ifdef ITK_HAS_GCC_PRAGMA_DIAG_PUSHPOP
+  ITK_GCC_PRAGMA_DIAG_PUSH()
+#endif
+ITK_GCC_PRAGMA_DIAG(ignored "-Wattributes")
+
+/** Declare specializations */
+template<> void ITKIOTransformBase_EXPORT TransformFileWriterTemplate< double >::PushBackTransformList(const Object *transObj);
+template<> void ITKIOTransformBase_EXPORT TransformFileWriterTemplate< float >::PushBackTransformList(const Object *transObj);
+
+#ifdef ITK_HAS_GCC_PRAGMA_DIAG_PUSHPOP
+  ITK_GCC_PRAGMA_DIAG_POP()
+#else
+  ITK_GCC_PRAGMA_DIAG(warning "-Wattributes")
+#endif
 
 } // namespace itk
 
@@ -116,8 +132,44 @@ typedef itk::TransformFileWriterTemplate<double> TransformFileWriter;
 #include "itkTransformIOFactoryRegisterManager.h"
 #endif
 
-#ifndef ITK_MANUAL_INSTANTIATION
-#include "itkTransformFileWriter.hxx"
-#endif
+// Note: Explicit instantiation is done in itkTransformFileWriterSpecializations.cxx
 
 #endif // itkTransformFileWriter_h
+
+/** Explicit instantiations */
+#ifndef ITK_TEMPLATE_EXPLICIT_TransformFileWriter
+// Explicit instantiation is required to ensure correct dynamic_cast
+// behavior across shared libraries.
+//
+// IMPORTANT: Since within the same compilation unit,
+//            ITK_TEMPLATE_EXPLICIT_<classname> defined and undefined states
+//            need to be considered. This code *MUST* be *OUTSIDE* the header
+//            guards.
+//
+#  if defined( ITKIOTransformBase_EXPORTS )
+//   We are building this library
+#    define ITKIOTransformBase_EXPORT_EXPLICIT
+#  else
+//   We are using this library
+#    define ITKIOTransformBase_EXPORT_EXPLICIT ITKIOTransformBase_EXPORT
+#  endif
+namespace itk
+{
+
+#ifdef ITK_HAS_GCC_PRAGMA_DIAG_PUSHPOP
+  ITK_GCC_PRAGMA_DIAG_PUSH()
+#endif
+ITK_GCC_PRAGMA_DIAG(ignored "-Wattributes")
+
+extern template class ITKIOTransformBase_EXPORT_EXPLICIT TransformFileWriterTemplate< double >;
+extern template class ITKIOTransformBase_EXPORT_EXPLICIT TransformFileWriterTemplate< float >;
+
+#ifdef ITK_HAS_GCC_PRAGMA_DIAG_PUSHPOP
+  ITK_GCC_PRAGMA_DIAG_POP()
+#else
+  ITK_GCC_PRAGMA_DIAG(warning "-Wattributes")
+#endif
+
+} // end namespace itk
+#  undef ITKIOTransformBase_EXPORT_EXPLICIT
+#endif

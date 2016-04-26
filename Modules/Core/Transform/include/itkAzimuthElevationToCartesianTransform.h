@@ -58,8 +58,8 @@ namespace itk
  *
  * There are two template parameters for this class:
  *
- * ScalarT       The type to be used for scalar numeric values.  Either
- *               float or double.
+ * TParametersValueType  The type to be used for scalar numeric
+ *                       values.  Either float or double.
  *
  * NDimensions   The number of dimensions of the vector space (must be >=3).
  *
@@ -70,6 +70,10 @@ namespace itk
  * \todo  Derive this class from a yet undefined TransformBase class.
  *        Currently, this class derives from AffineTransform, although
  *        it is not an affine transform.
+ *
+ * \todo  Add a figure in the documentation that informs the formulas used in this class
+ *        that are used to transform Cartesian to azimuth-elevation-radius
+ *
  * \ingroup ITKTransform
  *
  * \wiki
@@ -212,11 +216,8 @@ protected:
   void PrintSelf(std::ostream & s, Indent indent) const ITK_OVERRIDE;
 
 private:
-  AzimuthElevationToCartesianTransform(const Self &); // purposely not
-                                                      // implemented
-  void operator=(const Self &);                       //purposely not
-
-  // implemented
+  AzimuthElevationToCartesianTransform(const Self &) ITK_DELETE_FUNCTION;
+  void operator=(const Self &) ITK_DELETE_FUNCTION;
 
   long   m_MaxAzimuth;
   long   m_MaxElevation;

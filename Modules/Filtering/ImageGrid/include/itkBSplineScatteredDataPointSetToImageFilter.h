@@ -170,6 +170,8 @@ public:
   typedef typename PointDataImageType::Pointer      PointDataImagePointer;
   typedef FixedArray<unsigned,
     itkGetStaticConstMacro( ImageDimension )>       ArrayType;
+  typedef FixedArray<RealType,
+    itkGetStaticConstMacro( ImageDimension )>       RealArrayType;
 
   /**
    * Interpolation kernel type (default spline order = 3)
@@ -349,9 +351,8 @@ protected:
 
 private:
 
-  //purposely not implemented
-  BSplineScatteredDataPointSetToImageFilter( const Self & );
-  void operator=( const Self & );
+  BSplineScatteredDataPointSetToImageFilter( const Self & ) ITK_DELETE_FUNCTION;
+  void operator=( const Self & ) ITK_DELETE_FUNCTION;
 
   /**
    * Function used to propagate the fitting solution at one fitting level

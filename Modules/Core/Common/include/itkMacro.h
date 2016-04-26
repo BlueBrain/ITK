@@ -65,16 +65,21 @@ namespace itk
  * avoiding compile-time warnings. */
 #define itkNotUsed(x)
 
+// Define ITK_PRAGMA macro.
+//
+// It sets "#pragma" preprocessor directives without expecting the arguments
+// to be quoted.
+#define ITK_PRAGMA(x) _Pragma (#x)
 
 // The clang compiler has many useful non-default compiler warnings
 // that tend to have a high false positive rate.
 // The following set of defines allows us to suppress false positives
 // and still track down suspicious code
 #if defined(__clang__) && defined(__has_warning)
-#define CLANG_PRAGMA_PUSH _Pragma("clang diagnostic push")
-#define CLANG_PRAGMA_POP  _Pragma("clang diagnostic pop")
+#define CLANG_PRAGMA_PUSH ITK_PRAGMA(clang diagnostic push)
+#define CLANG_PRAGMA_POP  ITK_PRAGMA(clang diagnostic pop)
 # if __has_warning("-Wfloat-equal")
-#define CLANG_SUPPRESS_Wfloat_equal _Pragma("clang diagnostic ignored \"-Wfloat-equal\"" )
+#define CLANG_SUPPRESS_Wfloat_equal ITK_PRAGMA( clang diagnostic ignored "-Wfloat-equal" )
 # endif
 #else
 #define CLANG_PRAGMA_PUSH
@@ -82,6 +87,44 @@ namespace itk
 #define CLANG_SUPPRESS_Wfloat_equal
 #endif
 
+// Define ITK_GCC_PRAGMA_DIAG(param1 [param2 [...]]) macro.
+//
+// This macros sets a pragma diagnostic if it supported by the version
+// of GCC being used otherwise it is a no-op.
+//
+// GCC diagnostics pragma supported only with GCC >= 4.2
+#if defined( __GNUC__ ) && !defined( __INTEL_COMPILER )
+#  if ( __GNUC__ > 4 ) || (( __GNUC__ >= 4 ) && ( __GNUC_MINOR__ >= 2 ))
+#    define ITK_GCC_PRAGMA_DIAG(x) ITK_PRAGMA(GCC diagnostic x)
+#  else
+#    define ITK_GCC_PRAGMA_DIAG(x)
+#  endif
+#else
+#  define ITK_GCC_PRAGMA_DIAG(x)
+#endif
+
+// Define ITK_GCC_PRAGMA_DIAG_(PUSH|POP) macros.
+//
+// These macros respectively push and pop the diagnostic context
+// if it is supported by the version of GCC being used
+// otherwise it is a no-op.
+//
+// GCC push/pop diagnostics pragma are supported only with GCC >= 4.6
+//
+// Define macro ITK_HAS_GCC_PRAGMA_DIAG_PUSHPOP if it is supported.
+#if defined( __GNUC__ ) && !defined( __INTEL_COMPILER )
+#  if ( __GNUC__ > 4 ) || (( __GNUC__ >= 4 ) && ( __GNUC_MINOR__ >= 6 ))
+#    define ITK_GCC_PRAGMA_DIAG_PUSH() ITK_GCC_PRAGMA_DIAG(push)
+#    define ITK_GCC_PRAGMA_DIAG_POP() ITK_GCC_PRAGMA_DIAG(pop)
+#    define ITK_HAS_GCC_PRAGMA_DIAG_PUSHPOP
+#  else
+#    define ITK_GCC_PRAGMA_DIAG_PUSH()
+#    define ITK_GCC_PRAGMA_DIAG_POP()
+#  endif
+#else
+#  define ITK_GCC_PRAGMA_DIAG_PUSH()
+#  define ITK_GCC_PRAGMA_DIAG_POP()
+#endif
 
 /*
  * ITK only supports MSVC++ 7.1 and greater
@@ -141,6 +184,9 @@ namespace itk
 // is intended to override the base-class version.  This makes the code more
 // managable and fixes a set of common hard-to-find bugs.
 #define ITK_OVERRIDE override
+// In functions that should not be implemented, use the C++11 mechanism
+// to ensure that thye are purposely not implemented
+#define ITK_DELETE_FUNCTION =delete
 // In c++11 there is an explicit nullptr type that introduces a new keyword to
 // serve as a distinguished null pointer constant: nullptr. It is of type
 // nullptr_t, which is implicitly convertible and comparable to any pointer type
@@ -153,8 +199,11 @@ namespace itk
 // throw, if it does throw then std::terminate will be called.
 // Use cautiously.
 #define ITK_NOEXCEPT noexcept
+#define ITK_HAS_CXX11_STATIC_ASSERT
+#define ITK_HAS_CXX11_RVREF
 #else
 #define ITK_OVERRIDE
+#define ITK_DELETE_FUNCTION
 #define ITK_NULLPTR  NULL
 #define ITK_NOEXCEPT throw()
 #endif
@@ -322,8 +371,7 @@ extern ITKCommon_EXPORT void OutputWindowDisplayDebugText(const char *);
 #define itkWarningStatement(x) x
 
 #if defined( ITK_CPP_FUNCTION )
-  #if defined( _WIN32 ) && !defined( __MINGW32__ ) && !defined( CABLE_CONFIGURATION ) \
-  && !defined( __GCCXML__ )
+  #if defined( _WIN32 ) && !defined( __MINGW32__ ) && !defined( ITK_WRAPPING_PARSER )
     #define ITK_LOCATION __FUNCSIG__
   #elif defined( __GNUC__ )
     #define ITK_LOCATION __PRETTY_FUNCTION__
@@ -447,7 +495,7 @@ itkTypeMacro(newexcp, parentexcp);                                              
 //   itkLegacyMacro(void MyMethod());
 #if defined( ITK_LEGACY_REMOVE )
 #define itkLegacyMacro(method) /* no ';' */
-#elif defined( ITK_LEGACY_SILENT ) || defined( ITK_LEGACY_TEST ) || defined( __GCCXML__ )
+#elif defined( ITK_LEGACY_SILENT ) || defined( ITK_LEGACY_TEST ) || defined( ITK_WRAPPING_PARSER )
 // Provide legacy methods with no warnings.
 #define itkLegacyMacro(method) method
 #else
@@ -524,10 +572,7 @@ itkTypeMacro(newexcp, parentexcp);                                              
 // itkAlignedTypedef is a macro which creates a new typedef to make a
 // data structure aligned.
 //
-#if defined ( ITK_HAS_CPP11_ALIGNAS )
-# define itkAlignedTypedef( alignment, oldtype, newtype )   \
-  typedef oldtype newtype alignas(alignment)
-#elif defined( ITK_HAS_GNU_ATTRIBUTE_ALIGNED )
+#if defined( ITK_HAS_GNU_ATTRIBUTE_ALIGNED )
 # define itkAlignedTypedef( alignment, oldtype, newtype )   \
   typedef oldtype newtype __attribute__((aligned(alignment)))
 #elif defined ( _MSC_VER )
@@ -696,10 +741,27 @@ TTarget itkDynamicCastInDebugMode(TSource x)
 //  !!  The ITK Get/Set Macros for various types !!
 //  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//This is probably better, but requires a lot of extra work
-//for gettting ExplicitInstantiation to work properly. \#define
-// itkStaticConstMacro(name, type, value) static const type name = value
-#define itkStaticConstMacro(name, type, value) enum { name = value }
+/** Portable definition of static constants.
+ *
+ * \pre \c type shall be an integral type (\c bool and enums are accepted as
+ * well). If using C++, float may be valid (see below).
+ *
+ * \warning If the compiler does not support in-class member initialization,
+ * the constants will be signed integers. You may observe warnings due to signed /
+ * unsigned comparisons.
+ *
+ * When using C++11 or greater, constexpr
+ * may be necessary for static const float initialization
+ * and is beneficial in other cases where a value can be constant.
+ *
+ * \ingroup ITKCommon */
+#if __cplusplus >= 201103L
+#  define itkStaticConstMacro(name,type,value) static constexpr type name = value
+#elif defined(__GNUC__) && ((__GNUC__ * 100) + __GNUC_MINOR__ ) < 405 && !defined( __clang__ ) && !defined( __INTEL_COMPILER )
+#  define itkStaticConstMacro(name,type,value) enum { name = value }
+#else
+#  define itkStaticConstMacro(name,type,value) static const type name = value
+#endif
 
 #define itkGetStaticConstMacro(name) (Self::name)
 
@@ -745,7 +807,10 @@ TTarget itkDynamicCastInDebugMode(TSource x)
     const DecoratorType *oldInput =                                  \
       itkDynamicCastInDebugMode< const DecoratorType * >(            \
         this->ProcessObject::GetInput(#name) );                      \
+CLANG_PRAGMA_PUSH                                                    \
+CLANG_SUPPRESS_Wfloat_equal                                          \
     if ( oldInput && oldInput->Get() == _arg )                       \
+CLANG_PRAGMA_POP                                                     \
       {                                                              \
       return;                                                        \
       }                                                              \
@@ -883,7 +948,7 @@ CLANG_PRAGMA_POP                                    \
     }
 
 /** Set built-in type.  Creates member Set"name"() (e.g., SetVisibility());
- * This should be use when the type is an enum. It is use to avoid warnings on
+ * This should be used when the type is an enum. It is used to avoid warnings on
  * some compilers with non specified enum types passed to
  * itkDebugMacro. */
 #define itkSetEnumMacro(name, type)                                           \
@@ -1087,12 +1152,15 @@ CLANG_PRAGMA_POP                                       \
  * number of values into object.
  * Examples: void SetColor(c,3) */
 #define itkSetVectorMacro(name, type, count) \
-  virtual void Set##name(type data[])      \
+  virtual void Set##name(type data[])        \
     {                                        \
     unsigned int i;                          \
     for ( i = 0; i < count; i++ )            \
       {                                      \
-      if ( data[i] != this->m_##name[i] )  \
+CLANG_PRAGMA_PUSH                            \
+CLANG_SUPPRESS_Wfloat_equal                  \
+      if ( data[i] != this->m_##name[i] )    \
+CLANG_PRAGMA_POP                             \
         {                                    \
         break;                               \
         }                                    \
@@ -1102,7 +1170,7 @@ CLANG_PRAGMA_POP                                       \
       this->Modified();                      \
       for ( i = 0; i < count; i++ )          \
         {                                    \
-        this->m_##name[i] = data[i];       \
+        this->m_##name[i] = data[i];         \
         }                                    \
       }                                      \
     }
@@ -1115,19 +1183,24 @@ CLANG_PRAGMA_POP                                       \
     return this->m_##name;                 \
     }
 
-/** Construct a non-templatized helper class that
+/**\def itkGPUKernelClassMacro
+ * Construct a non-templatized helper class that
  * provides the GPU kernel source code as a const char*
  */
-#define itkGPUKernelClassMacro(kernel)   \
-class kernel                  \
-  {                                      \
-    public:                              \
+#define itkGPUKernelClassMacro(kernel)      \
+/**\class kernel                            \
+ * Workaround KWstyle bug                   \
+ * \ingroup ITKCommon                       \
+ */                                         \
+class kernel                                \
+  {                                         \
+    public:                                 \
       static const char* GetOpenCLSource(); \
-    private:                             \
-      kernel();                          \
-      virtual ~kernel();                 \
-      kernel(const kernel &);            \
-      void operator=(const kernel &);    \
+    private:                                \
+      kernel();                             \
+      virtual ~kernel();                    \
+      kernel(const kernel &);               \
+      void operator=(const kernel &);       \
   };
 
 #define itkGetOpenCLSourceFromKernelMacro(kernel) \

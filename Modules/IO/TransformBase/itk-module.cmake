@@ -2,7 +2,9 @@ set(DOCUMENTATION "This module contains the base classes for the input and outpu
 of itkTransform objects.")
 
 itk_module(ITKIOTransformBase
+  ENABLE_SHARED
   DEPENDS
+    ITKCommon
     ITKTransform
   COMPILE_DEPENDS
     ITKDisplacementField

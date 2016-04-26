@@ -121,7 +121,7 @@ function(add_cppcheck_dir _name _dir _include_dirs)
 
     itk_add_test(
       NAME
-        ${_name}_cppcheck_test
+        ${_name}CPPCheckTest
       COMMAND
         "${CPPCHECK_EXECUTABLE}"
         ${CPPCHECK_TEMPLATE_ARG}
@@ -130,7 +130,7 @@ function(add_cppcheck_dir _name _dir _include_dirs)
         ${_dir}
         )
 
-  set_tests_properties(${_name}_cppcheck_test
+  set_tests_properties(${_name}CPPCheckTest
     PROPERTIES
     FAIL_REGULAR_EXPRESSION
       "${CPPCHECK_FAIL_REGULAR_EXPRESSION}")
@@ -213,7 +213,7 @@ function(add_cppcheck_sources _targetname)
 
     itk_add_test(
       NAME
-        ${_targetname}_cppcheck_test
+        ${_targetname}CPPCheckTest
       COMMAND
         "${CPPCHECK_EXECUTABLE}"
         ${CPPCHECK_TEMPLATE_ARG}
@@ -221,7 +221,7 @@ function(add_cppcheck_sources _targetname)
         ${_cppcheck_compile_args}
         ${_files})
 
-  set_tests_properties(${_targetname}_cppcheck_test
+  set_tests_properties(${_targetname}CPPCheckTest
     PROPERTIES
     FAIL_REGULAR_EXPRESSION
       "${CPPCHECK_FAIL_REGULAR_EXPRESSION}")
@@ -257,6 +257,11 @@ function(add_cppcheck _name)
 
     get_cppcheck_arg( ${_input} )
 
+    get_target_property(_imported_target "${_name}" IMPORTED)
+    if(_imported_target)
+      return()
+    endif()
+
     get_target_property(_cppcheck_sources "${_name}" SOURCES)
     set(_files)
     foreach(_source ${_cppcheck_sources})
@@ -291,7 +296,7 @@ function(add_cppcheck _name)
 
      itk_add_test(
        NAME
-         ${_name}_cppcheck_test
+         ${_name}CPPCheckTest
        COMMAND
          "${CPPCHECK_EXECUTABLE}"
          ${CPPCHECK_TEMPLATE_ARG}
@@ -299,7 +304,7 @@ function(add_cppcheck _name)
          ${_cppcheck_compile_args}
          ${_files})
 
-      set_tests_properties(${_name}_cppcheck_test
+      set_tests_properties(${_name}CPPCheckTest
         PROPERTIES
         FAIL_REGULAR_EXPRESSION
         "${CPPCHECK_FAIL_REGULAR_EXPRESSION}")

@@ -111,15 +111,15 @@ protected:
   FFTWForwardFFTImageFilter();
   ~FFTWForwardFFTImageFilter() {}
 
-  virtual void GenerateData();
+  virtual void GenerateData() ITK_OVERRIDE;
 
-  virtual void UpdateOutputData(DataObject *output);
+  virtual void UpdateOutputData(DataObject *output) ITK_OVERRIDE;
 
   void PrintSelf(std::ostream & os, Indent indent) const ITK_OVERRIDE;
 
 private:
-  FFTWForwardFFTImageFilter(const Self&); // purposely not implemented
-  void operator=(const Self&);            // purposely not implemented
+  FFTWForwardFFTImageFilter(const Self&) ITK_DELETE_FUNCTION;
+  void operator=(const Self&) ITK_DELETE_FUNCTION;
 
   bool m_CanUseDestructiveAlgorithm;
 

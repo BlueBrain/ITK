@@ -34,6 +34,7 @@
 #include "itkDisplacementFieldTransform.h"
 #include "itkGaussianExponentialDiffeomorphicTransform.h"
 #include "itkGaussianSmoothingOnUpdateDisplacementFieldTransform.h"
+#include "itkMath.h"
 
 template<typename TParametersValueType, typename DisplacementTransformType >
 static int ReadWriteTest(const char * const fileName, const bool isRealDisplacementField )
@@ -128,10 +129,10 @@ static int ReadWriteTest(const char * const fileName, const bool isRealDisplacem
     const typename itk::TransformFileReaderTemplate<TParametersValueType>::TransformListType *
     list = reader->GetTransformList();
     typename DisplacementTransformType::ConstPointer readDisplacementTransform =
-    dynamic_cast<DisplacementTransformType *>( (*(list->begin())).GetPointer() );
+    static_cast<DisplacementTransformType *>( (*(list->begin())).GetPointer() );
     if (readDisplacementTransform.IsNull() )
       {
-      std::cerr << " ERROR: dynamic_cast failed! " << std::endl;
+      std::cerr << " ERROR: Read DisplacementTransform is null! " << std::endl;
       std::cerr << typeid(TParametersValueType).name() << std::endl;
       std::cerr << typeid(DisplacementTransformType).name() << std::endl;
       return EXIT_FAILURE;
@@ -161,7 +162,7 @@ static int ReadWriteTest(const char * const fileName, const bool isRealDisplacem
       return EXIT_FAILURE;
       }
     if ( ( readDisplacement->GetOrigin() != knownField->GetOrigin() )
-        || ( readDisplacement->GetOrigin()[0] != requiredOrigin ) )
+        || ( itk::Math::NotExactlyEquals(readDisplacement->GetOrigin()[0], requiredOrigin) ) )
       {
       std::cerr << "Error invalid origin restored from disk" << std::endl;
       std::cerr << std::setprecision(17) << "\n"

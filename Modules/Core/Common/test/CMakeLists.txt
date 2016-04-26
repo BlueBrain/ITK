@@ -97,13 +97,20 @@ itkPointGeometryTest.cxx
 itkMersenneTwisterRandomVariateGeneratorTest.cxx
 itkNumberToStringTest.cxx
 itkTimeProbeTest.cxx
+itkTimeProbeTest2.cxx
 itkStdStreamStateSaveTest.cxx
 VNLSparseLUSolverTraitsTest.cxx
 )
 
 set(ITKCommon2Tests
+itkMetaProgrammingLibraryTest.cxx
+itkIsConvertible.cxx
+itkIsBaseOf.cxx
+itkPromoteType.cxx
 itkThreadedIndexedContainerPartitionerTest.cxx
 itkThreadedIteratorRangePartitionerTest.cxx
+itkThreadedIteratorRangePartitionerTest2.cxx
+itkThreadedIteratorRangePartitionerTest3.cxx
 itkThreadedImageRegionPartitionerTest.cxx
 itkMetaDataDictionaryTest.cxx
 itkStdStreamLogOutputTest.cxx
@@ -172,11 +179,12 @@ itkSimpleFastMutexLockTest.cxx
 itkMetaDataObjectTest.cxx
 # itkVectorMultiplyTest.cxx
 itkThreadPoolTest.cxx
+itkSpawnThreadTest.cxx
 itkAtomicIntTest.cxx
 )
 
-CreateTestDriver(ITKCommon1 "${ITKCommon_LIBRARIES}" "${ITKCommon1Tests}" itkFloatingPointExceptionsExtern.cxx)
-CreateTestDriver(ITKCommon2 "${ITKCommon_LIBRARIES}" "${ITKCommon2Tests}")
+CreateTestDriver(ITKCommon1 "${ITKCommon-Test_LIBRARIES}" "${ITKCommon1Tests}" itkFloatingPointExceptionsExtern.cxx)
+CreateTestDriver(ITKCommon2 "${ITKCommon-Test_LIBRARIES}" "${ITKCommon2Tests}")
 
 set(BASELINE "${ITK_DATA_ROOT}/Baseline/Common")
 set(TEMP ${ITK_TEST_OUTPUT_DIR})
@@ -207,6 +215,8 @@ itk_add_test(NAME itkCommandObserverObjectTest COMMAND ITKCommon1TestDriver itkC
 itk_add_test(NAME itkAdaptorComparisonTest COMMAND ITKCommon1TestDriver itkAdaptorComparisonTest)
 itk_add_test(NAME itkThreadedIndexedContainerPartitionerTest COMMAND ITKCommon2TestDriver itkThreadedIndexedContainerPartitionerTest)
 itk_add_test(NAME itkThreadedIteratorRangePartitionerTest COMMAND ITKCommon2TestDriver itkThreadedIteratorRangePartitionerTest)
+itk_add_test(NAME itkThreadedIteratorRangePartitionerTest2 COMMAND ITKCommon2TestDriver itkThreadedIteratorRangePartitionerTest2)
+itk_add_test(NAME itkThreadedIteratorRangePartitionerTest3 COMMAND ITKCommon2TestDriver itkThreadedIteratorRangePartitionerTest3)
 
 itk_add_test(NAME itkImageAdaptorPipeLineTest COMMAND ITKCommon1TestDriver itkImageAdaptorPipeLineTest)
 itk_add_test(NAME itkThreadedImageRegionPartitionerTest COMMAND ITKCommon2TestDriver itkThreadedImageRegionPartitionerTest)
@@ -378,6 +388,7 @@ itk_add_test(NAME itkRealTimeClockTest COMMAND ITKCommon1TestDriver itkRealTimeC
 itk_add_test(NAME itkRealTimeStampTest COMMAND ITKCommon1TestDriver itkRealTimeStampTest)
 itk_add_test(NAME itkRealTimeIntervalTest COMMAND ITKCommon1TestDriver itkRealTimeIntervalTest)
 itk_add_test(NAME itkTimeProbeTest COMMAND ITKCommon1TestDriver itkTimeProbeTest)
+itk_add_test(NAME itkTimeProbeTest2 COMMAND ITKCommon1TestDriver itkTimeProbeTest2)
 itk_add_test(NAME itkRGBPixelTest COMMAND ITKCommon1TestDriver itkRGBPixelTest)
 itk_add_test(NAME itkSparseImageTest COMMAND ITKCommon1TestDriver itkSparseImageTest)
 itk_add_test(NAME itkSimpleFilterWatcherTest COMMAND ITKCommon1TestDriver itkSimpleFilterWatcherTest)
@@ -491,6 +502,8 @@ set_tests_properties(itkSimpleFastMutexLockTest PROPERTIES TIMEOUT 5)
 itk_add_test(NAME itkMetaDataObjectTest COMMAND ITKCommon2TestDriver itkMetaDataObjectTest)
 
 itk_add_test(NAME itkThreadPoolTest COMMAND ITKCommon2TestDriver itkThreadPoolTest 100)
+
+itk_add_test(NAME itkSpawnThreadTest COMMAND ITKCommon2TestDriver itkSpawnThreadTest 100)
 
 itk_add_test(NAME itkAtomicIntTest COMMAND ITKCommon2TestDriver itkAtomicIntTest)
 

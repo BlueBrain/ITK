@@ -53,7 +53,7 @@ macro(itk_wrap_module library_name)
 
   # WRAPPER_LIBRARY_OUTPUT_DIR. Directory in which generated cxx, xml, and idx
   # files will be placed.
-  set(WRAPPER_LIBRARY_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+  set(WRAPPER_LIBRARY_OUTPUT_DIR "${ITK_DIR}/Wrapping")
 
   # WRAPPER_LIBRARY_DEPENDS. List of names of other wrapper libraries that
   # define symbols used by this wrapper library.
@@ -62,12 +62,14 @@ macro(itk_wrap_module library_name)
 
   # WRAPPER_LIBRARY_LINK_LIBRARIES. List of other libraries that should
   # be linked to the wrapper library.
-  set(WRAPPER_LIBRARY_LINK_LIBRARIES ${ITK_LIBRARIES})
+  set(WRAPPER_LIBRARY_LINK_LIBRARIES ${ITK_LIBRARIES} ${${itk-module}_LIBRARIES})
 
-  # WRAPPER_LIBRARY_GROUPS. List of *.wrap groups in the source dir
-  # that should be included/wrapped before the rest. Just the group name is needed,
-  # not the full path or file name.
-  set(WRAPPER_LIBRARY_GROUPS )
+  # WRAPPER_SUBMODULE_ORDER. List of *.wrap submodules in the source dir
+  # that should be included/wrapped before the rest in the given order.
+  # Just the submodule group name is needed, not the full path or file name.
+  set(WRAPPER_SUBMODULE_ORDER )
+  # WRAPPER_LIBRARY_GROUPS is a deprecated variable for this specification.
+  unset(WRAPPER_LIBRARY_GROUPS )
 
   # WRAPPER_LIBRARY_SWIG_INPUTS. List of C++ source files to be used
   # as input for Swig. This list is then appended to by
@@ -155,9 +157,14 @@ macro(itk_auto_load_submodules)
   # Finally, this macro causes the language support files for the templates and
   # library here defined to be created.
 
-  # Next, include modules already in WRAPPER_LIBRARY_GROUPS, because those are
+  # For backwards compatibility
+  if(WRAPPER_LIBRARY_GROUPS)
+    set(WRAPPER_SUBMODULE_ORDER ${WRAPPER_LIBRARY_GROUPS})
+  endif()
+
+  # Next, include modules already in WRAPPER_SUBMODULE_ORDER, because those are
   # guaranteed to be processed first.
-  foreach(module ${WRAPPER_LIBRARY_GROUPS})
+  foreach(module ${WRAPPER_SUBMODULE_ORDER})
     itk_load_submodule("${module}")
   endforeach()
 
@@ -168,14 +175,14 @@ macro(itk_auto_load_submodules)
   # - the order is important for the order of creation of python template
   # - the typemaps files are always the same, and the rebuild can be avoided
   list(SORT wrap_cmake_files)
-  foreach(file ${wrap_cmake_files})
+  foreach(_file ${wrap_cmake_files})
     # get the module name from module.wrap
-    get_filename_component(module "${file}" NAME_WE)
+    get_filename_component(module "${_file}" NAME_WE)
 
     # if the module is already in the list, it means that it is already included
     # ... and do not include excluded modules
     set(will_include 1)
-    foreach(already_included ${WRAPPER_LIBRARY_GROUPS})
+    foreach(already_included ${WRAPPER_SUBMODULE_ORDER})
       if("${already_included}" STREQUAL "${module}")
         set(will_include 0)
       endif()
@@ -184,40 +191,10 @@ macro(itk_auto_load_submodules)
     if(${will_include})
       # Add the module name to the list. WRITE_MODULE_FILES uses this list
       # to create the master library wrapper file.
-      list(APPEND WRAPPER_LIBRARY_GROUPS "${module}")
+      list(APPEND WRAPPER_SUBMODULE_ORDER "${module}")
       itk_load_submodule("${module}")
     endif()
   endforeach()
-
-  # Now search for other *.wrap files to include
-  file(GLOB wrap_cmake_files "${WRAPPER_LIBRARY_SOURCE_DIR}/*.wrap")
-  # sort the list of files so we are sure to always get the same order on all system
-  # and for all builds. That's important for several reasons:
-  # - the order is important for the order of creation of python template
-  # - the typemaps files are always the same, and the rebuild can be avoided
-  list(SORT wrap_cmake_files)
-  foreach(file ${wrap_cmake_files})
-    # get the module name from wrap_module.cmake
-    get_filename_component(module "${file}" NAME_WE)
-    string(REGEX REPLACE "^wrap_" "" module "${module}")
-
-    # if the module is already in the list, it means that it is already included
-    # ... and do not include excluded modules
-    set(will_include 1)
-    foreach(already_included ${WRAPPER_LIBRARY_GROUPS})
-      if("${already_included}" STREQUAL "${module}")
-        set(will_include 0)
-      endif()
-    endforeach()
-
-    if(${will_include})
-      # Add the module name to the list. WRITE_MODULE_FILES uses this list
-      # to create the master library wrapper file.
-      list(APPEND WRAPPER_LIBRARY_GROUPS "${module}")
-      itk_load_submodule("${module}")
-    endif()
-  endforeach()
-
 endmacro()
 
 
@@ -459,9 +436,9 @@ macro(itk_end_wrap_class)
       itk_wrap_one_type("${WRAPPER_WRAP_METHOD}" "${WRAPPER_CLASS}" "${WRAPPER_SWIG_NAME}${mangled_suffix}" "${template_params}")
     endforeach()
   else()
-    if(WRAPPER_WARN_ABOUT_NO_TEMPLATE)
+    if(WRAPPER_WARN_ABOUT_NO_TEMPLATE AND NOT EXTERNAL_WRAP_ITK_PROJECT)
       # display a warning if the class is empty
-      message("Warning: No template declared for ${WRAPPER_CLASS}. Perhaps should you turn on more WRAP_* options?")
+      message("Warning: No template declared for ${WRAPPER_CLASS}. Perhaps you should turn on more WRAP_* options?")
     endif()
   endif()
 
@@ -582,12 +559,6 @@ endmacro()
 # string or just a set of separate parameters), or something of the form "n+"
 # (where n is a number) indicating that instantiations are allowed for dimension
 # n and above.
-#
-# E.g., if only ITK_WRAP_unsigned_char is selected and 2- and 3-dimensional images
-# are selected, then itk_wrap_image_filter_USIGN_INT(2)  will create instantiations for
-# filter<itk::Image<unsigned char, 2>, itk::Image<unsigned char, 2> >
-# and
-# filter<itk::Image<unsigned char, 3>, itk::Image<unsigned char, 3> >
 
 macro(itk_wrap_image_filter param_types param_count)
   # itk_wrap_image_filter is a more general macro for wrapping image filters that

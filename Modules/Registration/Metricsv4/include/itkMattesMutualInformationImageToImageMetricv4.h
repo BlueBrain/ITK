@@ -141,9 +141,9 @@ public:
   typedef typename Superclass::FixedSampledPointSetPointer    FixedSampledPointSetPointer;
 
   /* Image dimension accessors */
-  itkStaticConstMacro(VirtualImageDimension, ImageDimensionType, TVirtualImage::ImageDimension);
-  itkStaticConstMacro(FixedImageDimension, ImageDimensionType,  TFixedImage::ImageDimension);
-  itkStaticConstMacro(MovingImageDimension, ImageDimensionType, TMovingImage::ImageDimension);
+  itkStaticConstMacro(VirtualImageDimension, typename TVirtualImage::ImageDimensionType, TVirtualImage::ImageDimension);
+  itkStaticConstMacro(FixedImageDimension,   typename TFixedImage::ImageDimensionType,   TFixedImage::ImageDimension);
+  itkStaticConstMacro(MovingImageDimension,  typename TMovingImage::ImageDimensionType,  TMovingImage::ImageDimension);
 
   /** Number of bins to used in the histogram. Typical value is
    * 50. The minimum value is 5 due to the padding required by the Parzen
@@ -347,8 +347,8 @@ private:
   mutable std::vector<DerivativeType>              m_LocalDerivativeByParzenBin;
 
 private:
-  MattesMutualInformationImageToImageMetricv4(const Self &); //purposely not implemented
-  void operator = (const Self &); //purposely not implemented
+  MattesMutualInformationImageToImageMetricv4(const Self &) ITK_DELETE_FUNCTION;
+  void operator = (const Self &) ITK_DELETE_FUNCTION;
 
   /** Perform the final step in computing results */
   virtual void ComputeResults() const;

@@ -18,25 +18,12 @@
 
 from __future__ import print_function
 
-import types
 import inspect
 import os
+import re
 import warnings
 import itkConfig
 from itkTypes import itkCType
-
-
-def itkFormatWarning(msg, *a):
-    """"Format the warnings issued by itk to display only the message.
-
-    This will ignore the filename and the linenumber where the warning was
-    triggered. The message is returned to the warnings module.
-    """
-
-    return str(msg) + '\n'
-
-# Redefine the format of the warnings
-warnings.formatwarning = itkFormatWarning
 
 
 def registerNoTpl(name, cl):
@@ -143,7 +130,6 @@ class itkTemplate(object):
                 # we need to now the size of the name to keep only the suffix
                 # short name does not contain :: and nested namespace
                 # itk::Numerics::Sample -> itkSample
-                import re
                 shortNameSize = len(re.sub(r':.*:', '', self.__name__))
                 attributeName = cl.__name__[shortNameSize:]
         elif cl.__name__.startswith("vcl_complex"):
@@ -151,9 +137,12 @@ class itkTemplate(object):
             # expected vcl_complex
             attributeName = cl.__name__[len("vcl_complex"):]
         else:
-            import re
-            shortNameSize = len(re.sub(r'.*::', '', self.__name__))
-            attributeName = cl.__name__[shortNameSize:]
+            shortName = re.sub(r':.*:', '', self.__name__)
+
+            if not cl.__name__.startswith(shortName):
+                shortName = re.sub(r'.*::', '', self.__name__)
+
+            attributeName = cl.__name__[len(shortName):]
 
         if attributeName.isdigit():
             # the attribute name can't be a number
@@ -237,8 +226,8 @@ class itkTemplate(object):
             - a list of elements (Ex: itk.Image[itk.UC, 2])
         """
 
-        isin = isinstance(parameters, types.TupleType)
-        if not isin and not isinstance(parameters, types.ListType):
+        parameters_type = type(parameters)
+        if not parameters_type is tuple and not parameters_type is list:
             # parameters is a single element.
             # include it in a list to manage the 2 cases in the same way
             parameters = [parameters]
@@ -404,7 +393,7 @@ def New(self, *args, **kargs):
     else:
         callback = None
 
-    if callback:
+    if callback and not issubclass(self.__class__, itk.Command):
         try:
             name = self.__class__.__name__
 
@@ -438,8 +427,6 @@ def output(input):
 
 
 def image(input):
-    import sys
-    print(
-        ("WrapITK warning: itk.image() is deprecated. "
-            "Use itk.output() instead."), file=sys.stderr)
+    warnings.warn("WrapITK warning: itk.image() is deprecated. "
+            "Use itk.output() instead.")
     return output(input)

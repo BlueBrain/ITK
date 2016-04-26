@@ -66,7 +66,7 @@ set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS ${ITKVtkGlue_VTK_DEFI
 set(ITKVtkGlue_EXPORT_CODE_INSTALL "
 set(VTK_DIR \"${VTK_DIR}\")
 
-find_package(VTK NO_MODULE REQUIRED COMPONENTS vtkCommonCore)
+find_package(VTK NO_MODULE REQUIRED)
 
 if(NOT VTK_VERSION)
   set(VTK_VERSION \"${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}.${VTK_BUILD_VERSION}\")
@@ -84,7 +84,7 @@ if( ${VTK_VERSION} VERSION_LESS 6.0.0 )
   set(ITKVtkGlue_VTK_LIBRARIES ${VTK_LIBRARIES})
 else()
   set(_wrap_module)
-  if(ITK_WRAP_PYTHON)
+  if(ITK_WRAP_PYTHON AND PYTHON_VERSION_STRING VERSION_LESS 3.0)
     set(_wrap_module vtkWrappingPythonCore)
   endif()
   vtk_module_config(ITKVtkGlue_VTK
@@ -104,7 +104,7 @@ set(ITKVtkGlue_EXPORT_CODE_BUILD "
 if(NOT ITK_BINARY_DIR)
   set(VTK_DIR \"${VTK_DIR}\")
 
-  find_package(VTK NO_MODULE REQUIRED COMPONENTS vtkCommonCore)
+  find_package(VTK NO_MODULE REQUIRED)
 
   if(NOT VTK_VERSION)
     set(VTK_VERSION \"${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}.${VTK_BUILD_VERSION}\")
@@ -121,7 +121,7 @@ if(NOT ITK_BINARY_DIR)
     set(ITKVtkGlue_VTK_LIBRARIES ${VTK_LIBRARIES})
   else()
     set(_wrap_module)
-    if(ITK_WRAP_PYTHON)
+    if(ITK_WRAP_PYTHON AND PYTHON_VERSION_STRING VERSION_LESS 3.0)
       set(_wrap_module vtkWrappingPythonCore)
     endif()
     vtk_module_config(ITKVtkGlue_VTK

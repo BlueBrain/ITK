@@ -17,6 +17,9 @@
  *=========================================================================*/
 #ifndef itkTxtTransformIO_h
 #define itkTxtTransformIO_h
+
+#include "ITKIOTransformInsightLegacyExport.h"
+
 #include "itkTransformIOBase.h"
 
 namespace itk
@@ -81,8 +84,44 @@ typedef TxtTransformIOTemplate<double> TxtTransformIO;
 
 }
 
-#ifndef ITK_MANUAL_INSTANTIATION
-#include "itkTxtTransformIO.hxx"
-#endif
+// Note: Explicit instantiation is done in itkTxtTransformIO.cxx
 
 #endif // itkTxtTransformIO_h
+
+/** Explicit instantiations */
+#ifndef ITK_TEMPLATE_EXPLICIT_TxtTransformIO
+// Explicit instantiation is required to ensure correct dynamic_cast
+// behavior across shared libraries.
+//
+// IMPORTANT: Since within the same compilation unit,
+//            ITK_TEMPLATE_EXPLICIT_<classname> defined and undefined states
+//            need to be considered. This code *MUST* be *OUTSIDE* the header
+//            guards.
+//
+#  if defined( ITKIOTransformInsightLegacy_EXPORTS )
+//   We are building this library
+#    define ITKIOTransformInsightLegacy_EXPORT_EXPLICIT
+#  else
+//   We are using this library
+#    define ITKIOTransformInsightLegacy_EXPORT_EXPLICIT ITKIOTransformInsightLegacy_EXPORT
+#  endif
+namespace itk
+{
+
+#ifdef ITK_HAS_GCC_PRAGMA_DIAG_PUSHPOP
+  ITK_GCC_PRAGMA_DIAG_PUSH()
+#endif
+ITK_GCC_PRAGMA_DIAG(ignored "-Wattributes")
+
+  extern template class ITKIOTransformInsightLegacy_EXPORT_EXPLICIT TxtTransformIOTemplate< double >;
+extern template class ITKIOTransformInsightLegacy_EXPORT_EXPLICIT TxtTransformIOTemplate< float >;
+
+#ifdef ITK_HAS_GCC_PRAGMA_DIAG_PUSHPOP
+  ITK_GCC_PRAGMA_DIAG_POP()
+#else
+  ITK_GCC_PRAGMA_DIAG(warning "-Wattributes")
+#endif
+
+} // end namespace itk
+#  undef ITKIOTransformInsightLegacy_EXPORT_EXPLICIT
+#endif

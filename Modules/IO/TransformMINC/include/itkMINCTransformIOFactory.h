@@ -18,6 +18,7 @@
 
 #ifndef itkMINCTransformIOFactory_h
 #define itkMINCTransformIOFactory_h
+#include "ITKIOTransformMINCExport.h"
 
 #include "itkObjectFactoryBase.h"
 #include "itkTransformIOBase.h"
@@ -29,7 +30,7 @@ namespace itk
    *
    * \ingroup ITKIOTransformMINC
    */
-  class MINCTransformIOFactory:public ObjectFactoryBase
+  class ITKIOTransformMINC_EXPORT MINCTransformIOFactory:public ObjectFactoryBase
   {
   public:
     /** Standard class typedefs. */
@@ -54,7 +55,7 @@ namespace itk
     {
       MINCTransformIOFactory::Pointer metaFactory = MINCTransformIOFactory::New();
 
-      ObjectFactoryBase::RegisterFactory(metaFactory);
+      ObjectFactoryBase::RegisterFactoryInternal(metaFactory);
     }
 
   protected:
@@ -63,8 +64,8 @@ namespace itk
     virtual void PrintSelf(std::ostream & os, Indent indent) const ITK_OVERRIDE;
 
   private:
-    MINCTransformIOFactory(const Self &); //purposely not implemented
-    void operator=(const Self &);        //purposely not implemented
+    MINCTransformIOFactory(const Self &) ITK_DELETE_FUNCTION;
+    void operator=(const Self &) ITK_DELETE_FUNCTION;
   };
 } // end namespace itk
 

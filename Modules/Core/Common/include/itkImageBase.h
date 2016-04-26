@@ -124,11 +124,14 @@ public:
   /** Run-time type information (and related methods). */
   itkTypeMacro(ImageBase, DataObject);
 
+  /** Type of image dimension */
+  typedef unsigned int ImageDimensionType;
+
   /** Dimension of the image.  This constant is used by functions that are
    * templated over image type (as opposed to being templated over pixel
    * type and dimension) when they need compile time access to the dimension
    * of the image. */
-  itkStaticConstMacro(ImageDimension, unsigned int, VImageDimension);
+  itkStaticConstMacro(ImageDimension, ImageDimensionType, VImageDimension);
 
   /** Index typedef support. An index is used to access pixel values. */
   typedef Index< VImageDimension >           IndexType;
@@ -449,12 +452,12 @@ public:
   {
     Vector< SpacePrecisionType, VImageDimension > cvector;
 
-    for ( unsigned int k = 0; k < VImageDimension; k++ )
+    for ( unsigned int k = 0; k < VImageDimension; ++k )
       {
       cvector[k] = point[k] - this->m_Origin[k];
       }
     cvector = m_PhysicalPointToIndex * cvector;
-    for ( unsigned int i = 0; i < VImageDimension; i++ )
+    for ( unsigned int i = 0; i < VImageDimension; ++i )
       {
       index[i] = static_cast< TIndexRep >( cvector[i] );
       }
@@ -474,10 +477,10 @@ public:
     const ContinuousIndex< TIndexRep, VImageDimension > & index,
     Point< TCoordRep, VImageDimension > & point) const
   {
-    for ( unsigned int r = 0; r < VImageDimension; r++ )
+    for ( unsigned int r = 0; r < VImageDimension; ++r )
       {
       TCoordRep sum = NumericTraits< TCoordRep >::ZeroValue();
-      for ( unsigned int c = 0; c < VImageDimension; c++ )
+      for ( unsigned int c = 0; c < VImageDimension; ++c )
         {
         sum += this->m_IndexToPhysicalPoint(r, c) * index[c];
         }
@@ -504,10 +507,10 @@ public:
      *   const IndexType & index,
      *   Point< TCoordRep, VImageDimension > & point) const
      * {
-     *   for ( unsigned int i = 0; i < VImageDimension; i++ )
+     *   for ( unsigned int i = 0; i < VImageDimension; ++i )
      *     {
      *     point[i] = this->m_Origin[i];
-     *     for ( unsigned int j = 0; j < VImageDimension; j++ )
+     *     for ( unsigned int j = 0; j < VImageDimension; ++j )
      *       {
      *       point[i] += m_IndexToPhysicalPoint[i][j] * index[j];
      *       }
@@ -538,11 +541,11 @@ public:
     //
     const DirectionType & direction = this->GetDirection();
 
-    for ( unsigned int i = 0; i < VImageDimension; i++ )
+    for ( unsigned int i = 0; i < VImageDimension; ++i )
       {
       typedef typename NumericTraits< TCoordRep >::AccumulateType CoordSumType;
       CoordSumType sum = NumericTraits< CoordSumType >::ZeroValue();
-      for ( unsigned int j = 0; j < VImageDimension; j++ )
+      for ( unsigned int j = 0; j < VImageDimension; ++j )
         {
         sum += direction[i][j] * inputGradient[j];
         }
@@ -569,11 +572,11 @@ public:
     //
     const DirectionType & inverseDirection = this->GetInverseDirection();
 
-    for ( unsigned int i = 0; i < VImageDimension; i++ )
+    for ( unsigned int i = 0; i < VImageDimension; ++i )
       {
       typedef typename NumericTraits< TCoordRep >::AccumulateType CoordSumType;
       CoordSumType sum = NumericTraits< CoordSumType >::ZeroValue();
-      for ( unsigned int j = 0; j < VImageDimension; j++ )
+      for ( unsigned int j = 0; j < VImageDimension; ++j )
         {
         sum += inverseDirection[i][j] * inputGradient[j];
         }
@@ -750,8 +753,8 @@ protected:
     }
 
 private:
-  ImageBase(const Self &);      //purposely not implemented
-  void operator=(const Self &); //purposely not implemented
+  ImageBase(const Self &) ITK_DELETE_FUNCTION;
+  void operator=(const Self &) ITK_DELETE_FUNCTION;
 
   void InternalSetSpacing(const SpacingValueType spacing[VImageDimension])
     {

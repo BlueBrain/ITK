@@ -163,7 +163,7 @@ Similarity2DTransform<TParametersValueType>
 
   if( ( this->GetMatrix()[1][0] / m_Scale ) - std::sin( this->GetAngle() ) > 0.000001 )
     {
-    std::cout << "Bad Rotation Matrix" << std::endl;
+    itkExceptionMacro(<< "Bad Rotation Matrix");
     }
 }
 
@@ -284,7 +284,7 @@ void
 Similarity2DTransform<TParametersValueType>
 ::SetMatrix(const MatrixType & matrix)
 {
-  const double tolerance = 1e-10;
+  const TParametersValueType tolerance = MatrixOrthogonalityTolerance<TParametersValueType>::GetTolerance();
   this->SetMatrix( matrix, tolerance );
 }
 
@@ -292,7 +292,7 @@ Similarity2DTransform<TParametersValueType>
 template<typename TParametersValueType>
 void
 Similarity2DTransform<TParametersValueType>
-::SetMatrix(const MatrixType & matrix, double tolerance)
+::SetMatrix(const MatrixType & matrix, const TParametersValueType tolerance)
 {
   itkDebugMacro("setting  m_Matrix  to " << matrix);
 

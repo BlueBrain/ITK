@@ -275,6 +275,7 @@ else()
   endif()
   option(ITK_WRAP_SWIGINTERFACE "Build swig interfaces." ON)
   set(default OFF)
+  mark_as_advanced(ITK_WRAP_CASTXML ITK_WRAP_SWIGINTERFACE)
 endif()
 
 set(WRAP_ITK_GENERATORS CACHE INTERNAL "Internal generators list.")
@@ -309,6 +310,7 @@ foreach(lang ${generators})
     set(WRAP_ITK_UNUSED_GENERATORS ${WRAP_ITK_UNUSED_GENERATORS} "${lang}")
   endif()
 endforeach()
+mark_as_advanced(ITK_WRAP_EXPLICIT ITK_WRAP_DOC)
 set(WRAP_ITK_GENERATORS ${WRAP_ITK_GENERATORS} CACHE INTERNAL "Internal generators list.")
 set(WRAP_ITK_UNUSED_GENERATORS ${WRAP_ITK_UNUSED_GENERATORS} CACHE INTERNAL "Internal unused generators list.")
 
@@ -321,9 +323,3 @@ foreach(lang ${generators})
     include_directories(${inc})
   endif()
 endforeach()
-
-if(NOT EXTERNAL_WRAP_ITK_PROJECT)
-  install(FILES CMakeLists.txt itk.i
-    DESTINATION "${WRAP_ITK_INSTALL_PREFIX}/Configuration/Generators"
-  )
-endif()

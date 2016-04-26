@@ -28,6 +28,8 @@
 #ifndef itkTransformFactoryBase_h
 #define itkTransformFactoryBase_h
 
+#include "ITKIOTransformBaseExport.h"
+
 #include "itkObjectFactoryBase.h"
 
 namespace itk
@@ -37,7 +39,7 @@ namespace itk
  * \ingroup ITKIOTransformBase
  */
 
-class TransformFactoryBase:public ObjectFactoryBase
+class ITKIOTransformBase_EXPORT TransformFactoryBase:public ObjectFactoryBase
 {
 public:
   /** Standard class typedefs. */
@@ -77,8 +79,8 @@ protected:
   virtual ~TransformFactoryBase();
 
 private:
-  TransformFactoryBase(const Self &); //purposely not implemented
-  void operator=(const Self &);       //purposely not implemented
+  TransformFactoryBase(const Self &) ITK_DELETE_FUNCTION;
+  void operator=(const Self &) ITK_DELETE_FUNCTION;
 
   static TransformFactoryBase *m_Factory;
 };

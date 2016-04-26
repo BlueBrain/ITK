@@ -183,7 +183,7 @@ public:
    *     added to set the target landmarks similar to the
    *     SetParameters function setting the source landmarks
    */
-  virtual void SetFixedParameters(const ParametersType &) ITK_OVERRIDE;
+  virtual void SetFixedParameters(const FixedParametersType &) ITK_OVERRIDE;
 
   /** Update the Parameters array from the landmarks corrdinates. */
   virtual void UpdateParameters() const;
@@ -353,8 +353,8 @@ protected:
 
 private:
 
-  KernelTransform(const Self &); // purposely not implemented
-  void operator=(const Self &);  // purposely not implemented
+  KernelTransform(const Self &) ITK_DELETE_FUNCTION;
+  void operator=(const Self &) ITK_DELETE_FUNCTION;
 
 };
 } // end namespace itk

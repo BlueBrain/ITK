@@ -18,6 +18,8 @@
 #ifndef itkTransformIOFactory_h
 #define itkTransformIOFactory_h
 
+#include "ITKIOTransformBaseExport.h"
+
 #include "itkObject.h"
 #include "itkTransformIOBase.h"
 
@@ -32,7 +34,7 @@ typedef enum { ReadMode, WriteMode } TransformIOFactoryFileModeType;
  * \ingroup ITKIOTransformBase
  */
 template<typename TParametersValueType>
-class TransformIOFactoryTemplate:public Object
+class ITKIOTransformBase_TEMPLATE_EXPORT TransformIOFactoryTemplate:public Object
 {
 public:
   /** Standard class typedefs. */
@@ -55,16 +57,13 @@ public:
   static TransformIOBasePointer
   CreateTransformIO(const char *path, TransformIOFactoryFileModeType mode);
 
-  /** Register Built-in factories */
-  static void RegisterBuiltInFactories();
-
 protected:
   TransformIOFactoryTemplate();
-  ~TransformIOFactoryTemplate();
+  virtual ~TransformIOFactoryTemplate();
 
 private:
-  TransformIOFactoryTemplate(const Self &); //purposely not implemented
-  void operator=(const Self &);     //purposely not implemented
+  TransformIOFactoryTemplate(const Self &) ITK_DELETE_FUNCTION;
+  void operator=(const Self &) ITK_DELETE_FUNCTION;
 };
 
 /** This helps to meet backward compatibility */
@@ -72,8 +71,44 @@ typedef TransformIOFactoryTemplate<double> TransformIOFactory;
 
 } // end namespace itk
 
-#ifndef ITK_MANUAL_INSTANTIATION
-#include "itkTransformIOFactory.hxx"
+// Note: Explicit instantiation is done in itkTransformIOFactory.cxx
+
 #endif
 
+/** Explicit instantiations */
+#ifndef ITK_TEMPLATE_EXPLICIT_TransformIOFactory
+// Explicit instantiation is required to ensure correct dynamic_cast
+// behavior across shared libraries.
+//
+// IMPORTANT: Since within the same compilation unit,
+//            ITK_TEMPLATE_EXPLICIT_<classname> defined and undefined states
+//            need to be considered. This code *MUST* be *OUTSIDE* the header
+//            guards.
+//
+#  if defined( ITKIOTransformBase_EXPORTS )
+//   We are building this library
+#    define ITKIOTransformBase_EXPORT_EXPLICIT
+#  else
+//   We are using this library
+#    define ITKIOTransformBase_EXPORT_EXPLICIT ITKIOTransformBase_EXPORT
+#  endif
+namespace itk
+{
+
+#ifdef ITK_HAS_GCC_PRAGMA_DIAG_PUSHPOP
+  ITK_GCC_PRAGMA_DIAG_PUSH()
+#endif
+ITK_GCC_PRAGMA_DIAG(ignored "-Wattributes")
+
+extern template class ITKIOTransformBase_EXPORT_EXPLICIT TransformIOFactoryTemplate< double >;
+extern template class ITKIOTransformBase_EXPORT_EXPLICIT TransformIOFactoryTemplate< float >;
+
+#ifdef ITK_HAS_GCC_PRAGMA_DIAG_PUSHPOP
+  ITK_GCC_PRAGMA_DIAG_POP()
+#else
+  ITK_GCC_PRAGMA_DIAG(warning "-Wattributes")
+#endif
+
+} // end namespace itk
+#  undef ITKIOTransformBase_EXPORT_EXPLICIT
 #endif

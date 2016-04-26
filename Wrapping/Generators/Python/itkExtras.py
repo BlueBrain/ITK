@@ -144,7 +144,11 @@ def physical_size(imageOrFilter):
     This method take care of updating the needed informations
     """
     # required because range is overladed in this module
-    from __builtin__ import range
+    import sys
+    if sys.version_info >= (3, 0):
+      from builtins import range
+    else:
+      from __builtin__ import range
     spacing_ = spacing(imageOrFilter)
     size_ = size(imageOrFilter)
     result = []
@@ -383,7 +387,7 @@ def set_inputs(newItkObject, args=[], kargs={}):
             raise AttributeError('No method found to set the input.')
 
     # named args : name is the function name, value is argument(s)
-    for attribName, value in kargs.iteritems():
+    for attribName, value in kargs.items():
         # use Set as prefix. It allow to use a shorter and more intuitive
         # call (Ex: itk.ImageFileReader.UC2.New(FileName='image.png')) than
         # with the full name

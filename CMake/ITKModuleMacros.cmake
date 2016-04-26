@@ -6,17 +6,16 @@ include(${_ITKModuleMacros_DIR}/ITKModuleAPI.cmake)
 include(${_ITKModuleMacros_DIR}/ITKModuleDoxygen.cmake)
 include(${_ITKModuleMacros_DIR}/ITKModuleHeaderTest.cmake)
 include(${_ITKModuleMacros_DIR}/ITKModuleKWStyleTest.cmake)
+include(${_ITKModuleMacros_DIR}/CppcheckTargets.cmake)
+include(${_ITKModuleMacros_DIR}/ITKModuleCPPCheckTest.cmake)
 
-# With Apple's GGC <=4.2 and LLVM-GCC <=4.2 visibility of template
-# don't work. Set the option to off and hide it.
-if(APPLE AND CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION  VERSION_LESS "4.3")
+# With Apple's (GGC <=4.2 and LLVM-GCC <=4.2) or (Clang < 3.2)
+# visibility of template  don't work. Set the option to off and hide it.
+if(APPLE AND ((CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION  VERSION_LESS "4.3")
+   OR ((CMAKE_CXX_COMPILER_ID MATCHES "Clang") AND CMAKE_CXX_COMPILER_VERSION  VERSION_LESS "3.2")))
   set( USE_COMPILER_HIDDEN_VISIBILITY OFF CACHE INTERNAL "" )
 endif()
 include(GenerateExportHeader)
-
-if(ITK_CPPCHECK_TEST)
-  include(${_ITKModuleMacros_DIR}/ITKModuleCPPCheckTest.cmake)
-endif()
 
 # itk_module(<name>)
 #
@@ -64,7 +63,6 @@ macro(itk_module _name)
   set(ITK_MODULE_${itk-module}_PRIVATE_DEPENDS "")
   set(ITK_MODULE_${itk-module-test}_DEPENDS "${itk-module}")
   set(ITK_MODULE_${itk-module}_DESCRIPTION "description")
-  set(ITK_MODULE_${itk-module}_EXCLUDE_FROM_DEFAULT 0)
   set(ITK_MODULE_${itk-module}_ENABLE_SHARED 0)
   foreach(arg ${ARGN})
     ### Parse itk_module named options
@@ -103,13 +101,20 @@ macro(itk_module _name)
     endif()
   endforeach()
   list(SORT ITK_MODULE_${itk-module}_DEPENDS) # Deterministic order.
-  set(ITK_MODULE_${itk-module}_LINK_DEPENDS ${ITK_MODULE_${itk-module}_DEPENDS} )
+  set(ITK_MODULE_${itk-module}_PUBLIC_DEPENDS ${ITK_MODULE_${itk-module}_DEPENDS} )
   list(APPEND ITK_MODULE_${itk-module}_DEPENDS
     ${ITK_MODULE_${itk-module}_COMPILE_DEPENDS}
     ${ITK_MODULE_${itk-module}_PRIVATE_DEPENDS}
   )
+  set(ITK_MODULE_${itk-module}_TRANSITIVE_DEPENDS
+    ${ITK_MODULE_${itk-module}_PUBLIC_DEPENDS}
+    ${ITK_MODULE_${itk-module}_COMPILE_DEPENDS}
+  )
   unset(ITK_MODULE_${itk-module}_COMPILE_DEPENDS)
   list(SORT ITK_MODULE_${itk-module}_DEPENDS) # Deterministic order.
+  if(ITK_MODULE_${itk-module}_TRANSITIVE_DEPENDS) # Don't sort an empty list
+    list(SORT ITK_MODULE_${itk-module}_TRANSITIVE_DEPENDS) # Deterministic order.
+  endif()
   list(SORT ITK_MODULE_${itk-module}_PRIVATE_DEPENDS) # Deterministic order.
   list(SORT ITK_MODULE_${itk-module-test}_DEPENDS) # Deterministic order.
 endmacro()
@@ -160,6 +165,11 @@ macro(itk_module_impl)
     list(APPEND ${itk-module}_INCLUDE_DIRS ${${itk-module}_SOURCE_DIR}/include)
     install(DIRECTORY include/ DESTINATION ${${itk-module}_INSTALL_INCLUDE_DIR} COMPONENT Development)
   endif()
+  if(NOT ITK_SOURCE_DIR)
+    # When building a module outside the ITK source tree, find the export
+    # header.
+    list(APPEND ${itk-module}_INCLUDE_DIRS ${${itk-module}_BINARY_DIR}/include)
+  endif()
 
   if(${itk-module}_INCLUDE_DIRS)
     include_directories(${${itk-module}_INCLUDE_DIRS})
@@ -199,20 +209,21 @@ macro(itk_module_impl)
 
 
   if( ITK_MODULE_${itk-module}_ENABLE_SHARED )
-
-    # Need to use relative path to work around CMake ISSUE 12645 fixed
-    # in CMake 2.8.8, to support older versions
-    set(_export_header_file "${ITKCommon_BINARY_DIR}/${itk-module}Export.h")
-    file(RELATIVE_PATH _export_header_file ${CMAKE_CURRENT_BINARY_DIR} ${_export_header_file} )
+    if(ITK_SOURCE_DIR)
+      set(_export_header_file "${ITKCommon_BINARY_DIR}/${itk-module}Export.h")
+    else()
+      set(_export_header_file "${${itk-module}_BINARY_DIR}/include/${itk-module}Export.h")
+    endif()
 
     # Generate the export macro header for symbol visibility/Windows DLL declspec
     generate_export_header(${itk-module}
       EXPORT_FILE_NAME ${_export_header_file}
       EXPORT_MACRO_NAME ${itk-module}_EXPORT
+      TEMPLATE_EXPORT_MACRO_NAME ${itk-module}_TEMPLATE_EXPORT
       NO_EXPORT_MACRO_NAME ${itk-module}_HIDDEN
       STATIC_DEFINE ITK_STATIC )
     install(FILES
-      ${ITKCommon_BINARY_DIR}/${itk-module}Export.h
+      ${_export_header_file}
       DESTINATION ${${itk-module}_INSTALL_INCLUDE_DIR}
       COMPONENT Development
       )
@@ -241,8 +252,20 @@ macro(itk_module_impl)
 
   set(itk-module-EXPORT_CODE-build "${${itk-module}_EXPORT_CODE_BUILD}")
   set(itk-module-EXPORT_CODE-install "${${itk-module}_EXPORT_CODE_INSTALL}")
+  if(ITK_SOURCE_DIR)
+    # Uses ITKTargets.cmake
+    set(itk-module-TARGETS_FILE-build "")
+    set(itk-module-TARGETS_FILE-install "")
+  else()
+    set(itk-module-TARGETS_FILE-build "${${itk-module}_TARGETS_FILE_BUILD}")
+    set(itk-module-TARGETS_FILE-install "${${itk-module}_TARGETS_FILE_INSTALL}")
+  endif()
 
+  set(itk-module-ENABLE_SHARED "${ITK_MODULE_${itk-module}_ENABLE_SHARED}")
   set(itk-module-DEPENDS "${ITK_MODULE_${itk-module}_DEPENDS}")
+  set(itk-module-PUBLIC_DEPENDS "${ITK_MODULE_${itk-module}_PUBLIC_DEPENDS}")
+  set(itk-module-TRANSITIVE_DEPENDS "${ITK_MODULE_${itk-module}_TRANSITIVE_DEPENDS}")
+  set(itk-module-PRIVATE_DEPENDS "${ITK_MODULE_${itk-module}_PRIVATE_DEPENDS}")
   set(itk-module-LIBRARIES "${${itk-module}_LIBRARIES}")
   set(itk-module-INCLUDE_DIRS-build "${${itk-module}_INCLUDE_DIRS}")
   set(itk-module-INCLUDE_DIRS-install "\${ITK_INSTALL_PREFIX}/${${itk-module}_INSTALL_INCLUDE_DIR}")
@@ -250,19 +273,30 @@ macro(itk_module_impl)
     list(APPEND itk-module-INCLUDE_DIRS-build "${${itk-module}_SYSTEM_INCLUDE_DIRS}")
     list(APPEND itk-module-INCLUDE_DIRS-install "${${itk-module}_SYSTEM_INCLUDE_DIRS}")
   endif()
+  if(WIN32)
+    set(itk-module-RUNTIME_LIBRARY_DIRS-build "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+    set(itk-module-RUNTIME_LIBRARY_DIRS-install "\${ITK_INSTALL_PREFIX}/${ITK_INSTALL_RUNTIME_DIR}")
+  else()
+    set(itk-module-RUNTIME_LIBRARY_DIRS-build "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+    set(itk-module-RUNTIME_LIBRARY_DIRS-install "\${ITK_INSTALL_PREFIX}/${ITK_INSTALL_LIBRARY_DIR}")
+  endif()
   set(itk-module-LIBRARY_DIRS "${${itk-module}_SYSTEM_LIBRARY_DIRS}")
+  set(itk-module-RUNTIME_LIBRARY_DIRS "${itk-module-RUNTIME_LIBRARY_DIRS-build}")
   set(itk-module-INCLUDE_DIRS "${itk-module-INCLUDE_DIRS-build}")
   set(itk-module-EXPORT_CODE "${itk-module-EXPORT_CODE-build}")
+  set(itk-module-TARGETS_FILE "${itk-module-TARGETS_FILE-build}")
   configure_file(${_ITKModuleMacros_DIR}/ITKModuleInfo.cmake.in ${ITK_MODULES_DIR}/${itk-module}.cmake @ONLY)
   set(itk-module-INCLUDE_DIRS "${itk-module-INCLUDE_DIRS-install}")
   set(itk-module-EXPORT_CODE "${itk-module-EXPORT_CODE-install}")
+  set(itk-module-TARGETS_FILE "${itk-module-TARGETS_FILE-install}")
+  set(itk-module-RUNTIME_LIBRARY_DIRS "${itk-module-RUNTIME_LIBRARY_DIRS-install}")
   configure_file(${_ITKModuleMacros_DIR}/ITKModuleInfo.cmake.in CMakeFiles/${itk-module}.cmake @ONLY)
   install(FILES
     ${${itk-module}_BINARY_DIR}/CMakeFiles/${itk-module}.cmake
     DESTINATION ${ITK_INSTALL_PACKAGE_DIR}/Modules
     COMPONENT Development
     )
-  itk_module_doxygen( ${itk-module} )   # module name
+  itk_module_doxygen(${itk-module})   # module name
 endmacro()
 
 # itk_module_link_dependencies()
@@ -271,10 +305,10 @@ endmacro()
 # dependency given to itk_module either publicly or privately.
 macro(itk_module_link_dependencies)
   # link to public dependencies
-  foreach(dep IN LISTS ITK_MODULE_${itk-module}_LINK_DEPENDS)
-    if(${dep}_LIBRARIES)
+  foreach(dep IN LISTS ITK_MODULE_${itk-module}_PUBLIC_DEPENDS)
+    if(DEFINED ${dep}_LIBRARIES)
       target_link_libraries(${itk-module} LINK_PUBLIC ${${dep}_LIBRARIES})
-    elseif(${dep})
+    elseif(DEFINED ${dep})
       target_link_libraries(${itk-module} LINK_PUBLIC ${${dep}})
     else()
       message(FATAL_ERROR "Dependency \"${dep}\" not found: could not find [${dep}] or [${dep}_LIBRARIES]")
@@ -283,9 +317,9 @@ macro(itk_module_link_dependencies)
 
   # link to private dependencies
   foreach(dep IN LISTS ITK_MODULE_${itk-module}_PRIVATE_DEPENDS)
-    if(${dep}_LIBRARIES)
+    if(DEFINED ${dep}_LIBRARIES)
       target_link_libraries(${itk-module} LINK_PRIVATE ${${dep}_LIBRARIES})
-    elseif(${dep})
+    elseif(DEFINED ${dep})
       target_link_libraries(${itk-module} LINK_PRIVATE ${${dep}})
     else()
       message(FATAL_ERROR "Dependency \"${dep}\" not found: could not find [${dep}] or [${dep}_LIBRARIES]")
